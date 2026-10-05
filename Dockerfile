@@ -1,26 +1,17 @@
-# --- build ---
-FROM python:3.12-alpine AS build
+FROM python:3.11-slim
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
-
-RUN apk add --no-cache build-base
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# --- runtime ---
-FROM python:3.12-alpine
+RUN chown -R appuser:appuser /app
 
-WORKDIR /app
+USER appuser
 
-COPY --from=build /install /usr/local
-COPY --from=build /app /app
-
-ENV PYTHONUNBUFFERED=1
-
-EXPOSE 5000
-
-CMD ["python", "app.py"]
+CMD ["python", "-m", "flask", "run"]
